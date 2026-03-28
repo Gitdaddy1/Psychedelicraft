@@ -103,6 +103,14 @@ public class BurnerBlockEntity extends SyncedBlockEntity implements BlockWithFlu
         return temperature;
     }
 
+    public int getProcessingTime() {
+        return processingTime;
+    }
+
+    public boolean isCrafting() {
+        return product != null || processingTime > 0;
+    }
+
     public void setTemperature(int temperature) {
         this.temperature = temperature;
         markDirty();
@@ -225,7 +233,8 @@ public class BurnerBlockEntity extends SyncedBlockEntity implements BlockWithFlu
                 consumer
         );
         world.getRecipeManager().getFirstMatch(PSRecipes.CHEMISTRY, input, world).ifPresentOrElse(recipe -> {
-            if (++processingTime >= recipe.value().stewTime()) {
+            int requiredTime = Math.max(1, recipe.value().stewTime() / 4);
+            if (++processingTime >= requiredTime) {
                 processingTime = 0;
                 craftAndCollectResult(world, input, recipe);
                 contents.onCraft(input);

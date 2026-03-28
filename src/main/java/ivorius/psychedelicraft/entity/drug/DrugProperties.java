@@ -158,19 +158,35 @@ public class DrugProperties implements NbtSerialisable {
     }
 
     public void addToDrug(DrugType<?> type, double effect) {
-        getDrug(type).addToDesiredValue(effect);
+        if (effect <= 0) {
+            return;
+        }
+        Drug drug = getDrug(type);
+        double scaledEffect = scaleDose(drug, effect);
+        if (scaledEffect <= 0) {
+            return;
+        }
+        drug.addToDesiredValue(scaledEffect);
         PSCriteria.DRUG_EFFECTS_CHANGED.trigger(this);
         markDirty();
     }
 
     public void addToDrug(DrugType<?> type, double effect, DrugInfluenceInstance influence) {
-        getDrug(type).addToDesiredValue(effect, influence);
+        if (effect <= 0) {
+            return;
+        }
+        Drug drug = getDrug(type);
+        double scaledEffect = scaleDose(drug, effect);
+        if (scaledEffect <= 0) {
+            return;
+        }
+        drug.addToDesiredValue(scaledEffect, influence);
         PSCriteria.DRUG_EFFECTS_CHANGED.trigger(this);
         markDirty();
     }
 
     public void setDrugValue(DrugType<?> type, double effect) {
-        getDrug(type).setDesiredValue(effect);
+        getDrug(type).setDesiredValue(MathHelper.clamp(effect, 0, 1));
         PSCriteria.DRUG_EFFECTS_CHANGED.trigger(this);
         markDirty();
     }
@@ -178,6 +194,14 @@ public class DrugProperties implements NbtSerialisable {
     public void addToDrug(DrugInfluence influence) {
         influences.add(new DrugInfluenceInstance(influence));
         markDirty();
+    }
+
+    private static double scaleDose(Drug drug, double effect) {
+        double dose = MathHelper.clamp(effect, 0, 1);
+        double activeValue = MathHelper.clamp(drug.getActiveValue(), 0, 1);
+        double remaining = 1 - activeValue;
+        double breakthroughScale = 1 + (activeValue * 0.75);
+        return MathHelper.clamp(dose * breakthroughScale * remaining, 0, 1);
     }
 
     public void addAll(Iterable<DrugInfluence> influences) {
