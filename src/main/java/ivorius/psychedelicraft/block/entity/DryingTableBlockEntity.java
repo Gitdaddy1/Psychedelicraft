@@ -32,7 +32,8 @@ import net.minecraft.util.math.*;
 
 public class DryingTableBlockEntity extends BlockEntityWithInventory {
     public static final int OUTPUT_SLOT_INDEX = 0;
-    private static final float PROCESSING_SPEED_MULTIPLIER = 0.25F;
+    // Quartering configured time keeps recipes much faster while preserving per-recipe difficulty scaling.
+    private static final float PROCESSING_TIME_FACTOR = 0.25F;
     private static final int[] INPUT_SLOTS = new int[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     private static final int[] OUTPUT_SLOTS = new int[]{ OUTPUT_SLOT_INDEX };
 
@@ -40,7 +41,7 @@ public class DryingTableBlockEntity extends BlockEntityWithInventory {
         long time = (long)(recipeDifficulty * (ironTable
                 ? Psychedelicraft.getConfig().ironDryingTableTickDuration.get()
                 : Psychedelicraft.getConfig().dryingTableTickDuration.get()));
-        return Math.max(1, (long)(time * PROCESSING_SPEED_MULTIPLIER));
+        return Math.max(1, (long)(time * PROCESSING_TIME_FACTOR));
     }
 
     private float heat;

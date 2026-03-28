@@ -125,17 +125,24 @@ public class BurnerBlock extends BlockWithEntity {
 
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-        if (!world.isClient && world.getBlockEntity(pos, PSBlockEntities.BUNSEN_BURNER).isPresent()) {
-            world.getBlockEntity(pos, PSBlockEntities.BUNSEN_BURNER).ifPresent(be -> {
-                player.sendMessage(Text.translatable(
-                        "block.psychedelicraft.bunsen_burner.status",
-                        be.getTemperature(),
-                        be.isCrafting() ? Text.translatable("block.psychedelicraft.bunsen_burner.status.active") : Text.translatable("block.psychedelicraft.bunsen_burner.status.idle")
-                ), true);
-            });
+        var burner = world.getBlockEntity(pos, PSBlockEntities.BUNSEN_BURNER);
+        if (burner.isEmpty()) {
+            return super.onUse(state, world, pos, player, hit);
+        }
+        if (world.isClient) {
             return ActionResult.SUCCESS;
         }
-        return super.onUse(state, world, pos, player, hit);
+        burner.ifPresent(be -> {
+            Text status = be.isCrafting()
+                    ? Text.translatable("block.psychedelicraft.bunsen_burner.status.active")
+                    : Text.translatable("block.psychedelicraft.bunsen_burner.status.idle");
+            player.sendMessage(Text.translatable(
+                    "block.psychedelicraft.bunsen_burner.status",
+                    be.getTemperature(),
+                    status
+            ), true);
+        });
+        return ActionResult.SUCCESS;
     }
 
     @Override

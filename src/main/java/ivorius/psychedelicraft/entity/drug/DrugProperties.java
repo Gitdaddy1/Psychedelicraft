@@ -54,6 +54,7 @@ public class DrugProperties implements NbtSerialisable {
     public static final Identifier DRUG_EFFECT = Psychedelicraft.id("drugs");
     public static final int MAX_CARDIAC_ARREST_TIME = 2000;
     public static final int RECOVERY_COOLDOWN = 20;
+    private static final double BREAKTHROUGH_AMPLIFICATION_FACTOR = 0.75;
 
     private static final Codec<Map<DrugType<?>, Drug>> DRUGS_CODEC = Codec.unboundedMap(DrugType.REGISTRY.getCodec(), Drug.CODEC);
 
@@ -158,34 +159,37 @@ public class DrugProperties implements NbtSerialisable {
     }
 
     public void addToDrug(DrugType<?> type, double effect) {
-        if (effect <= 0) {
-            return;
-        }
         Drug drug = getDrug(type);
-        double scaledEffect = scaleDose(drug, effect);
-        if (scaledEffect <= 0) {
-            return;
+        if (effect > 0) {
+            double scaledEffect = scaleDose(drug, effect);
+            if (scaledEffect <= 0) {
+                return;
+            }
+            drug.addToDesiredValue(scaledEffect);
+        } else {
+            drug.addToDesiredValue(effect);
         }
-        drug.addToDesiredValue(scaledEffect);
         PSCriteria.DRUG_EFFECTS_CHANGED.trigger(this);
         markDirty();
     }
 
     public void addToDrug(DrugType<?> type, double effect, DrugInfluenceInstance influence) {
-        if (effect <= 0) {
-            return;
-        }
         Drug drug = getDrug(type);
-        double scaledEffect = scaleDose(drug, effect);
-        if (scaledEffect <= 0) {
-            return;
+        if (effect > 0) {
+            double scaledEffect = scaleDose(drug, effect);
+            if (scaledEffect <= 0) {
+                return;
+            }
+            drug.addToDesiredValue(scaledEffect, influence);
+        } else {
+            drug.addToDesiredValue(effect, influence);
         }
-        drug.addToDesiredValue(scaledEffect, influence);
         PSCriteria.DRUG_EFFECTS_CHANGED.trigger(this);
         markDirty();
     }
 
     public void setDrugValue(DrugType<?> type, double effect) {
+        // Desired values are normalized to [0..1] everywhere in the drug model.
         getDrug(type).setDesiredValue(MathHelper.clamp(effect, 0, 1));
         PSCriteria.DRUG_EFFECTS_CHANGED.trigger(this);
         markDirty();
@@ -197,11 +201,15 @@ public class DrugProperties implements NbtSerialisable {
     }
 
     private static double scaleDose(Drug drug, double effect) {
-        double dose = MathHelper.clamp(effect, 0, 1);
+        double dose = Math.min(effect, 1);
         double activeValue = MathHelper.clamp(drug.getActiveValue(), 0, 1);
         double remaining = 1 - activeValue;
-        double breakthroughScale = 1 + (activeValue * 0.75);
-        return MathHelper.clamp(dose * breakthroughScale * remaining, 0, 1);
+        // breakthroughScale = 1 + (activeValue * 0.75), which keeps the curve
+        // noticeably stronger at higher intoxication without making
+        // each small dose instantly cap the effect. We then cap by remaining
+        // headroom so dose increases never overshoot the normalized maximum.
+        double breakthroughScale = 1 + (activeValue * BREAKTHROUGH_AMPLIFICATION_FACTOR);
+        return Math.max(0, Math.min(remaining, dose * breakthroughScale));
     }
 
     public void addAll(Iterable<DrugInfluence> influences) {
