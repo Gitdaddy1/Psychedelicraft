@@ -1,0 +1,8 @@
+- [Home](Home)
+- [Installation and Compatibility](Installation-and-Compatibility)
+- [Getting Started](Getting-Started)
+- [Blocks and Items Reference](Blocks-and-Items-Reference)
+- [Fluids and Drug Effects Reference](Fluids-and-Drug-Effects-Reference)
+- [Commands, Gamerule, and Configuration](Commands-Gamerule-and-Configuration)
+- [World Generation and Technical Systems](World-Generation-and-Technical-Systems)
+- [Troubleshooting](Troubleshooting)
