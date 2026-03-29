@@ -25,7 +25,7 @@
   </style>
 </head>
 <body>
-  <div class="report" id="report" role="status" aria-live="polite" aria-busy="true">
+  <div class="report" id="report">
     Loading...
   </div>
 
@@ -46,15 +46,13 @@
         var list = document.createElement('ul');
         for (var i = 0; i < problems.length; i += 1) {
           var item = document.createElement('li');
-          item.textContent = String(problems[i]);
+          item.textContent = problems[i];
           list.appendChild(item);
         }
 
         report.textContent = '';
         report.appendChild(list);
       }
-
-      report.setAttribute('aria-busy', 'false');
     })();
   </script>
 </body>
