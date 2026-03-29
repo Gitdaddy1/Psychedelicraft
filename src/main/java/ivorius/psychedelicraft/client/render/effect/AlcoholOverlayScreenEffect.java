@@ -28,7 +28,7 @@ public class AlcoholOverlayScreenEffect extends DrugOverlayScreenEffect<AlcoholD
         float overlayAlpha = Math.min(0.8F, (MathHelper.sin(tickDelta / 80F) * alcohol * 0.5F + alcohol));
         Sprite sprite = MinecraftClient.getInstance().getBlockRenderManager()
                 .getModels()
-                .getModelParticleSprite(Blocks.NETHER_PORTAL.getDefaultState());
+                .getModelParticleSprite(Blocks.WHITE_STAINED_GLASS.getDefaultState());
 
         context.drawSpriteStretched(RenderLayer::getBlockScreenEffect, sprite,
                 0, 0,

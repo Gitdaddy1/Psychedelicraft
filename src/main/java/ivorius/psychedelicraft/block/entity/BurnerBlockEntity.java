@@ -71,6 +71,7 @@ import net.minecraft.world.event.GameEvent;
 
 public class BurnerBlockEntity extends SyncedBlockEntity implements BlockWithFluid.DirectionalFluidResovoir, PipeInsertable {
     static final int[] CONTAINER_SLOT_ID = {0};
+    private static final int PROCESSING_TIME_DIVISOR = 4;
 
     private int temperature;
     private ItemStack container = ItemStack.EMPTY;
@@ -101,6 +102,14 @@ public class BurnerBlockEntity extends SyncedBlockEntity implements BlockWithFlu
 
     public int getTemperature() {
         return temperature;
+    }
+
+    public int getProcessingTime() {
+        return processingTime;
+    }
+
+    public boolean isCrafting() {
+        return product != null || processingTime > 0;
     }
 
     public void setTemperature(int temperature) {
@@ -225,7 +234,8 @@ public class BurnerBlockEntity extends SyncedBlockEntity implements BlockWithFlu
                 consumer
         );
         world.getRecipeManager().getFirstMatch(PSRecipes.CHEMISTRY, input, world).ifPresentOrElse(recipe -> {
-            if (++processingTime >= recipe.value().stewTime()) {
+            int requiredTime = Math.max(1, recipe.value().stewTime() / PROCESSING_TIME_DIVISOR);
+            if (++processingTime >= requiredTime) {
                 processingTime = 0;
                 craftAndCollectResult(world, input, recipe);
                 contents.onCraft(input);

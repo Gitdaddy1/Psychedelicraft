@@ -16,6 +16,7 @@ import net.minecraft.screen.ScreenHandlerType;
  * @since 12 Jan 2023
  */
 public interface PSScreenHandlers {
+    ScreenHandlerType<DrugGuideScreenHandler> DRUG_GUIDE = register("drug_guide", new ScreenHandlerType<>(DrugGuideScreenHandler::new, FeatureFlags.VANILLA_FEATURES));
     ScreenHandlerType<DryingTableScreenHandler> DRYING_TABLE = register("drying_table", new ScreenHandlerType<>(DryingTableScreenHandler::new, FeatureFlags.VANILLA_FEATURES));
 
     ScreenHandlerType<FluidContraptionScreenHandler<BarrelBlockEntity>> BARREL = register("barrel", contraptionScreenHander());

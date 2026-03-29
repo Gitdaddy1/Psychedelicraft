@@ -32,6 +32,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.Properties;
@@ -120,6 +121,28 @@ public class BurnerBlock extends BlockWithEntity {
         }
 
         return ActionResult.PASS_TO_DEFAULT_BLOCK_ACTION;
+    }
+
+    @Override
+    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+        var burner = world.getBlockEntity(pos, PSBlockEntities.BUNSEN_BURNER);
+        if (burner.isEmpty()) {
+            return super.onUse(state, world, pos, player, hit);
+        }
+        if (world.isClient) {
+            return ActionResult.SUCCESS;
+        }
+        burner.ifPresent(be -> {
+            Text status = be.isCrafting()
+                    ? Text.translatable("block.psychedelicraft.bunsen_burner.status.active")
+                    : Text.translatable("block.psychedelicraft.bunsen_burner.status.idle");
+            player.sendMessage(Text.translatable(
+                    "block.psychedelicraft.bunsen_burner.status",
+                    be.getTemperature(),
+                    status
+            ), true);
+        });
+        return ActionResult.SUCCESS;
     }
 
     @Override
