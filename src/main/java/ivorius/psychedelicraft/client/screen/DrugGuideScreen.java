@@ -46,6 +46,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
 
     public DrugGuideScreen(DrugGuideScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
+        playerInventoryTitle = Text.empty();
         backgroundWidth = 380;
         backgroundHeight = 240;
         titleX = 10;
@@ -240,12 +241,18 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
     }
 
     private void forEachRelevantRecipe(RecipeManager manager, Consumer<Recipe<?>> consumer) {
-        manager.getAllOfType(RecipeType.CRAFTING).stream().map(RecipeEntry::value).forEach(consumer);
-        manager.getAllOfType(RecipeType.SMELTING).stream().map(RecipeEntry::value).forEach(consumer);
-        manager.getAllOfType(PSRecipes.DRYING_TYPE).stream().map(RecipeEntry::value).forEach(consumer);
-        manager.getAllOfType(PSRecipes.MASHING_TYPE).stream().map(RecipeEntry::value).forEach(consumer);
-        manager.getAllOfType(PSRecipes.CHEMISTRY).stream().map(RecipeEntry::value).forEach(consumer);
-        manager.getAllOfType(PSRecipes.TRAY).stream().map(RecipeEntry::value).forEach(consumer);
+        manager.values().stream()
+                .map(RecipeEntry::value)
+                .filter(recipe -> {
+                    RecipeType<?> type = recipe.getType();
+                    return type == RecipeType.CRAFTING
+                            || type == RecipeType.SMELTING
+                            || type == PSRecipes.DRYING_TYPE
+                            || type == PSRecipes.MASHING_TYPE
+                            || type == PSRecipes.CHEMISTRY
+                            || type == PSRecipes.TRAY;
+                })
+                .forEach(consumer);
     }
 
     private boolean usesItem(Recipe<?> recipe, Item item) {
