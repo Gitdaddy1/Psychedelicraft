@@ -17,7 +17,6 @@ import ivorius.psychedelicraft.recipe.MashingRecipe;
 import ivorius.psychedelicraft.recipe.MixingRecipe;
 import ivorius.psychedelicraft.recipe.SmeltingFluidRecipe;
 import ivorius.psychedelicraft.screen.DrugGuideScreenHandler;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.player.PlayerInventory;
@@ -329,8 +328,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
     }
 
     private net.minecraft.registry.RegistryWrapper.WrapperLookup getLookup() {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        return mc.world != null ? mc.world.getRegistryManager() : null;
+        return client != null && client.world != null ? client.world.getRegistryManager() : null;
     }
 
     private record RecipeGuide(List<Text> howToMake, List<Text> usedFor) {

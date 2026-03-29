@@ -113,7 +113,14 @@ public class Psychedelicraft implements ModInitializer {
 
     private static void giveGuideIfMissing(ServerPlayerEntity player) {
         ItemStack guide = PSItems.DRUG_GUIDE.getDefaultStack();
-        if (!player.getInventory().contains(guide)) {
+        boolean hasGuide = false;
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            if (player.getInventory().getStack(i).isOf(PSItems.DRUG_GUIDE)) {
+                hasGuide = true;
+                break;
+            }
+        }
+        if (!hasGuide) {
             if (!player.giveItemStack(guide.copy())) {
                 player.dropItem(guide.copy(), false);
             }
