@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Problems Report</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      line-height: 1.4;
+    }
+
+    .report {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      background: #fafafa;
+    }
+
+    .report ul {
+      margin: 0.5rem 0 0;
+      padding-left: 1.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="report" id="report" aria-live="polite" aria-busy="true">
+    Loading...
+  </div>
+
+  <script>
+    (function renderProblemsReport() {
+      var report = document.getElementById('report');
+      if (!report) return;
+
+      var problems = Array.isArray(window.problemsReport) ? window.problemsReport : [];
+
+      if (problems.length === 0) {
+        report.textContent = 'No problems found.';
+      } else {
+        var list = document.createElement('ul');
+        for (var i = 0; i < problems.length; i += 1) {
+          var item = document.createElement('li');
+          item.textContent = String(problems[i]);
+          list.appendChild(item);
+        }
+
+        report.textContent = '';
+        report.appendChild(list);
+      }
+
+      report.setAttribute('aria-busy', 'false');
+    })();
+  </script>
+</body>
+</html>
