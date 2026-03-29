@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import ivorius.psychedelicraft.recipe.BottleRecipe;
@@ -16,6 +17,7 @@ import ivorius.psychedelicraft.recipe.FluidAwareShapelessRecipe;
 import ivorius.psychedelicraft.recipe.HardeningRecipe;
 import ivorius.psychedelicraft.recipe.MashingRecipe;
 import ivorius.psychedelicraft.recipe.MixingRecipe;
+import ivorius.psychedelicraft.recipe.PSRecipes;
 import ivorius.psychedelicraft.recipe.SmeltingFluidRecipe;
 import ivorius.psychedelicraft.screen.DrugGuideScreenHandler;
 import net.minecraft.client.gui.DrawContext;
@@ -25,7 +27,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeEntry;
 import net.minecraft.recipe.RecipeManager;
+import net.minecraft.recipe.RecipeType;
 import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
@@ -176,7 +180,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
             return;
         }
         Set<Item> items = new LinkedHashSet<>();
-        manager.values().forEach(recipeMap -> recipeMap.values().forEach(recipe -> addRecipeItems(items, recipe.value())));
+        forEachRelevantRecipe(manager, recipe -> addRecipeItems(items, recipe));
         allItems.clear();
         allItems.addAll(items.stream().sorted(Comparator.comparing(i -> i.getName().getString())).toList());
         selection = Math.min(selection, Math.max(0, allItems.size() - 1));
@@ -220,8 +224,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
         List<Text> craft = new ArrayList<>();
         List<Text> usage = new ArrayList<>();
 
-        manager.values().forEach(recipeMap -> recipeMap.values().forEach(recipeEntry -> {
-            Recipe<?> recipe = recipeEntry.value();
+        forEachRelevantRecipe(manager, recipe -> {
             boolean produces = producesItem(recipe, item);
             boolean uses = usesItem(recipe, item);
 
@@ -231,9 +234,18 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
             if (uses) {
                 usage.add(describeRecipe(recipe, false));
             }
-        }));
+        });
 
         return new RecipeGuide(deduplicate(craft), deduplicate(usage));
+    }
+
+    private void forEachRelevantRecipe(RecipeManager manager, Consumer<Recipe<?>> consumer) {
+        manager.getAllOfType(RecipeType.CRAFTING).stream().map(RecipeEntry::value).forEach(consumer);
+        manager.getAllOfType(RecipeType.SMELTING).stream().map(RecipeEntry::value).forEach(consumer);
+        manager.getAllOfType(PSRecipes.DRYING_TYPE).stream().map(RecipeEntry::value).forEach(consumer);
+        manager.getAllOfType(PSRecipes.MASHING_TYPE).stream().map(RecipeEntry::value).forEach(consumer);
+        manager.getAllOfType(PSRecipes.CHEMISTRY).stream().map(RecipeEntry::value).forEach(consumer);
+        manager.getAllOfType(PSRecipes.TRAY).stream().map(RecipeEntry::value).forEach(consumer);
     }
 
     private boolean usesItem(Recipe<?> recipe, Item item) {
