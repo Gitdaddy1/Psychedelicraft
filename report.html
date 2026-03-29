@@ -25,7 +25,7 @@
   </style>
 </head>
 <body>
-  <div class="report" id="report" role="status" aria-live="off" aria-busy="true">
+  <div class="report" id="report" role="status" aria-live="polite" aria-busy="true">
     Loading...
   </div>
 
@@ -41,10 +41,8 @@
         : [];
 
       if (problems.length === 0) {
-        report.setAttribute('aria-live', 'polite');
         report.textContent = 'No problems found.';
       } else {
-        report.setAttribute('aria-live', 'polite');
         var list = document.createElement('ul');
         for (var i = 0; i < problems.length; i += 1) {
           var item = document.createElement('li');
