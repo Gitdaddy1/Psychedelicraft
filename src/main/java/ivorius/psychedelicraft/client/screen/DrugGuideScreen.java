@@ -1,6 +1,7 @@
 package ivorius.psychedelicraft.client.screen;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.Recipe;
 import net.minecraft.recipe.RecipeManager;
+import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 
@@ -32,6 +34,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
     private static final int ENTRY_HEIGHT = 12;
     private static final int ENTRY_COUNT = 17;
     private static final int LIST_WIDTH = 160;
+    private static final CraftingRecipeInput EMPTY_CRAFTING_INPUT = CraftingRecipeInput.create(3, 3, Collections.nCopies(9, ItemStack.EMPTY));
 
     private final List<Item> allItems = new ArrayList<>();
     private int selection = 0;
@@ -183,6 +186,13 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
     private void addRecipeItems(Set<Item> items, Recipe<?> recipe) {
         if (recipe instanceof CraftingRecipe crafting) {
             crafting.getIngredientPlacement().getIngredients().forEach(ingredient -> ingredient.getMatchingItems().forEach(entry -> items.add(entry.value())));
+            var lookup = getLookup();
+            if (lookup != null) {
+                ItemStack result = crafting.craft(EMPTY_CRAFTING_INPUT, lookup);
+                if (!result.isEmpty()) {
+                    items.add(result.getItem());
+                }
+            }
         } else if (recipe instanceof DryingRecipe drying) {
             items.add(drying.output().getItem());
             drying.input().getMatchingItems().forEach(entry -> items.add(entry.value()));
@@ -255,6 +265,10 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
     }
 
     private boolean producesItem(Recipe<?> recipe, Item item) {
+        var lookup = getLookup();
+        if (recipe instanceof CraftingRecipe crafting && lookup != null && crafting.craft(EMPTY_CRAFTING_INPUT, lookup).isOf(item)) {
+            return true;
+        }
         if (recipe instanceof DryingRecipe drying) {
             return drying.output().isOf(item);
         }
