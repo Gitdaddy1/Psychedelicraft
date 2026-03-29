@@ -1,11 +1,13 @@
 package ivorius.psychedelicraft.client.screen;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import ivorius.psychedelicraft.recipe.BottleRecipe;
@@ -15,6 +17,7 @@ import ivorius.psychedelicraft.recipe.FluidAwareShapelessRecipe;
 import ivorius.psychedelicraft.recipe.HardeningRecipe;
 import ivorius.psychedelicraft.recipe.MashingRecipe;
 import ivorius.psychedelicraft.recipe.MixingRecipe;
+import ivorius.psychedelicraft.recipe.PSRecipes;
 import ivorius.psychedelicraft.recipe.SmeltingFluidRecipe;
 import ivorius.psychedelicraft.screen.DrugGuideScreenHandler;
 import net.minecraft.client.gui.DrawContext;
@@ -24,7 +27,10 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.recipe.CraftingRecipe;
 import net.minecraft.recipe.Recipe;
+import net.minecraft.recipe.RecipeEntry;
 import net.minecraft.recipe.RecipeManager;
+import net.minecraft.recipe.RecipeType;
+import net.minecraft.recipe.input.CraftingRecipeInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Colors;
 
@@ -32,6 +38,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
     private static final int ENTRY_HEIGHT = 12;
     private static final int ENTRY_COUNT = 17;
     private static final int LIST_WIDTH = 160;
+    private static final CraftingRecipeInput EMPTY_CRAFTING_INPUT = CraftingRecipeInput.create(3, 3, Collections.nCopies(9, ItemStack.EMPTY));
 
     private final List<Item> allItems = new ArrayList<>();
     private int selection = 0;
@@ -39,9 +46,9 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
 
     public DrugGuideScreen(DrugGuideScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
+        playerInventoryTitle = Text.empty();
         backgroundWidth = 380;
         backgroundHeight = 240;
-        playerInventoryTitle = Text.empty();
         titleX = 10;
         titleY = 8;
     }
@@ -174,19 +181,22 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
             return;
         }
         Set<Item> items = new LinkedHashSet<>();
-        manager.values().forEach(recipe -> addRecipeItems(items, recipe.value(), lookup));
+        forEachRelevantRecipe(manager, recipe -> addRecipeItems(items, recipe));
         allItems.clear();
         allItems.addAll(items.stream().sorted(Comparator.comparing(i -> i.getName().getString())).toList());
         selection = Math.min(selection, Math.max(0, allItems.size() - 1));
         ensureVisible();
     }
 
-    private void addRecipeItems(Set<Item> items, Recipe<?> recipe, net.minecraft.registry.RegistryWrapper.WrapperLookup lookup) {
+    private void addRecipeItems(Set<Item> items, Recipe<?> recipe) {
         if (recipe instanceof CraftingRecipe crafting) {
-            crafting.getIngredients().forEach(ingredient -> ingredient.getMatchingItems().forEach(entry -> items.add(entry.value())));
-            ItemStack result = crafting.getResult(lookup);
-            if (!result.isEmpty()) {
-                items.add(result.getItem());
+            crafting.getIngredientPlacement().getIngredients().forEach(ingredient -> ingredient.getMatchingItems().forEach(entry -> items.add(entry.value())));
+            var lookup = getLookup();
+            if (lookup != null) {
+                ItemStack result = crafting.craft(EMPTY_CRAFTING_INPUT, lookup);
+                if (!result.isEmpty()) {
+                    items.add(result.getItem());
+                }
             }
         } else if (recipe instanceof DryingRecipe drying) {
             items.add(drying.output().getItem());
@@ -215,8 +225,7 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
         List<Text> craft = new ArrayList<>();
         List<Text> usage = new ArrayList<>();
 
-        manager.values().forEach(recipeEntry -> {
-            Recipe<?> recipe = recipeEntry.value();
+        forEachRelevantRecipe(manager, recipe -> {
             boolean produces = producesItem(recipe, item);
             boolean uses = usesItem(recipe, item);
 
@@ -231,9 +240,24 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
         return new RecipeGuide(deduplicate(craft), deduplicate(usage));
     }
 
+    private void forEachRelevantRecipe(RecipeManager manager, Consumer<Recipe<?>> consumer) {
+        manager.values().stream()
+                .map(RecipeEntry::value)
+                .filter(recipe -> {
+                    RecipeType<?> type = recipe.getType();
+                    return type == RecipeType.CRAFTING
+                            || type == RecipeType.SMELTING
+                            || type == PSRecipes.DRYING_TYPE
+                            || type == PSRecipes.MASHING_TYPE
+                            || type == PSRecipes.CHEMISTRY
+                            || type == PSRecipes.TRAY;
+                })
+                .forEach(consumer);
+    }
+
     private boolean usesItem(Recipe<?> recipe, Item item) {
         if (recipe instanceof CraftingRecipe crafting) {
-            return crafting.getIngredients().stream().anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
+            return crafting.getIngredientPlacement().getIngredients().stream().anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
         }
         if (recipe instanceof DryingRecipe drying) {
             return drying.input().getMatchingItems().anyMatch(entry -> entry.value() == item);
@@ -251,17 +275,17 @@ public class DrugGuideScreen extends HandledScreen<DrugGuideScreenHandler> {
                     .anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
         }
         if (recipe instanceof MixingRecipe mixing) {
-            return mixing.getIngredients().stream().anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
+            return mixing.getIngredientPlacement().getIngredients().stream().anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
         }
         if (recipe instanceof BottleRecipe bottle) {
-            return bottle.getIngredients().stream().anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
+            return bottle.getIngredientPlacement().getIngredients().stream().anyMatch(ingredient -> ingredient.getMatchingItems().anyMatch(entry -> entry.value() == item));
         }
         return false;
     }
 
     private boolean producesItem(Recipe<?> recipe, Item item) {
         var lookup = getLookup();
-        if (recipe instanceof CraftingRecipe crafting && lookup != null && crafting.getResult(lookup).isOf(item)) {
+        if (recipe instanceof CraftingRecipe crafting && lookup != null && crafting.craft(EMPTY_CRAFTING_INPUT, lookup).isOf(item)) {
             return true;
         }
         if (recipe instanceof DryingRecipe drying) {
