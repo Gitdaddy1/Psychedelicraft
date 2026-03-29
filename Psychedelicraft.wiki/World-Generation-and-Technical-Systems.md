@@ -53,6 +53,8 @@ From `PSTags.java`:
 
 ### Item tags
 
+(`receptical/*` spelling is the exact registry/tag spelling used by the mod source.)
+
 - `bottle_rack_insertable`
 - `bunsen_burner_insertable`
 - `barrels`
@@ -90,7 +92,7 @@ From `PSTags.java`:
 ### Biome tags
 
 - `has_dense_juniper_trees`
-- `has_sparce_juniper_trees`
+- `has_sparce_juniper_trees` (spelling as in source)
 - `has_morning_glory`
 - `has_belladonna`
 - `has_jimsonweed`
