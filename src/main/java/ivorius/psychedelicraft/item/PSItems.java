@@ -269,6 +269,7 @@ public interface PSItems {
             .food(new FoodComponent.Builder().nutrition(8).saturationModifier(0.8f).alwaysEdible().build(), PSConsumableComponents.FAST_FOOD),
                 SuspiciousItem.createForms(Items.COOKIE, Items.MUSHROOM_STEW, Items.GOLDEN_APPLE, Items.COOKED_BEEF, Items.COOKED_CHICKEN))
             );
+    Item DRUG_GUIDE = register("drug_guide", s -> new DrugGuideItem(s.maxCount(1)));
 
     Item TRAY = register("tray", PSBlocks.TRAY);
     Item BUNSEN_BURNER = register("bunsen_burner", PSBlocks.BUNSEN_BURNER);

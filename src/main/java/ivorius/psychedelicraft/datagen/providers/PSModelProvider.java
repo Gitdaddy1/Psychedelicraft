@@ -174,6 +174,7 @@ public class PSModelProvider extends FabricModelProvider {
                 PSItems.LSA_SQUARE, PSItems.LSD_PILL,
                 PSItems.MORPHINE_TABLET, PSItems.HASH_MUFFIN,
                 PSItems.OBSIDIAN_BOTTLE,
+                PSItems.DRUG_GUIDE,
                 PSItems.BAG_O_VOMIT, PSItems.JOLLY_RANCHER, PSItems.BROKEN_GLASS,
 
                 PSItems.JUNIPER_BOAT, PSItems.JUNIPER_CHEST_BOAT, PSItems.JUNIPER_BERRIES

@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreens;
  */
 public interface PSScreens {
     static void bootstrap() {
+        HandledScreens.register(PSScreenHandlers.DRUG_GUIDE, DrugGuideScreen::new);
         HandledScreens.register(PSScreenHandlers.DRYING_TABLE, DryingTableScreen::new);
         HandledScreens.register(PSScreenHandlers.BARREL, BarrelScreen::new);
         HandledScreens.register(PSScreenHandlers.DISTILLERY, DistilleryScreen::new);

@@ -27,6 +27,8 @@ import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.HitResult;
 
@@ -74,15 +76,19 @@ public class Psychedelicraft implements ModInitializer {
 
     @Override
     public void onInitialize() {
-
         ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, origin, destination) -> {
             DrugProperties.of(player).sendCapabilities();
         });
         ServerPlayerEvents.COPY_FROM.register((oldPlayer, newPlayer, alive) -> {
             DrugProperties.of(newPlayer).copyFrom(DrugProperties.of(oldPlayer), alive);
         });
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            giveGuideIfMissing(newPlayer);
+        });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            DrugProperties.of(handler.player).sendCapabilities();
+            ServerPlayerEntity player = handler.player;
+            DrugProperties.of(player).sendCapabilities();
+            giveGuideIfMissing(player);
         });
         PSBlockEntities.bootstrap();
         PSBlocks.bootstrap();
@@ -103,5 +109,14 @@ public class Psychedelicraft implements ModInitializer {
         PSParticles.bootstrap();
         PSDamageTypes.bootstrap();
         VariantMarshal.bootstrap();
+    }
+
+    private static void giveGuideIfMissing(ServerPlayerEntity player) {
+        ItemStack guide = PSItems.DRUG_GUIDE.getDefaultStack();
+        if (!player.getInventory().contains(guide)) {
+            if (!player.giveItemStack(guide.copy())) {
+                player.dropItem(guide.copy(), false);
+            }
+        }
     }
 }
